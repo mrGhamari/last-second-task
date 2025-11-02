@@ -5,7 +5,7 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: ['@nuxt/eslint', '@nuxt/image', '@pinia/nuxt'],
   css: [
-    'bootstrap/dist/css/bootstrap.min.css',
+    '~/assets/styles/bootstrap.scss',
     '~/assets/styles/main.scss'
   ],
   runtimeConfig: {
