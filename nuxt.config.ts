@@ -1,3 +1,5 @@
+const isGitHubPages = process.env.GITHUB_PAGES === 'true'
+
 export default defineNuxtConfig({
   srcDir: 'app',
   serverDir: 'server',
@@ -13,17 +15,26 @@ export default defineNuxtConfig({
       apiBase: process.env.NUXT_PUBLIC_API_BASE || 'https://smart-home-api.lahzeakhari.ir/api'
     }
   },
-  ssr: true,
-  routeRules: {
-    '/': { prerender: true },
-    '/rooms': { prerender: true },
-    '/rooms/**': { ssr: true },
-    '/api/rooms/**': { cache: { maxAge: 300, swr: true } }
-  },
+  // For GitHub Pages we run as a SPA and rely on 404.html fallback
+  ssr: isGitHubPages ? false : true,
+  routeRules: isGitHubPages
+    ? {
+        '/': { prerender: true },
+        '/rooms': { prerender: true }
+      }
+    : {
+        '/': { prerender: true },
+        '/rooms': { prerender: true },
+        '/rooms/**': { ssr: true },
+        '/api/rooms/**': { cache: { maxAge: 300, swr: true } }
+      },
   nitro: {
-    prerender: { crawlLinks: true }
+    prerender: { crawlLinks: true },
+    preset: isGitHubPages ? 'github_pages' : undefined
   },
   app: {
+    // Set base path for assets/routes when hosted under /<repo>/ on GitHub Pages
+    baseURL: process.env.NUXT_APP_BASE_URL || '/',
     head: {
       htmlAttrs: { lang: 'en' },
       meta: [
