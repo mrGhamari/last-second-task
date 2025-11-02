@@ -27,14 +27,22 @@ jobs:
           cache: npm
       - name: Install
         run: npm ci
+      - name: Compute base URL for GitHub Pages
+        run: |
+          REPO_NAME="${{ github.event.repository.name }}"
+          OWNER="${{ github.repository_owner }}"
+          if [ "$REPO_NAME" = "${OWNER}.github.io" ]; then
+            echo "NUXT_APP_BASE_URL=/" >> $GITHUB_ENV
+          else
+            echo "NUXT_APP_BASE_URL=/$REPO_NAME/" >> $GITHUB_ENV
+          fi
+          echo "GITHUB_PAGES=true" >> $GITHUB_ENV
       - name: Build (Generate static site)
         env:
-          # Mark that we are building for GitHub Pages (SPA + 404 fallback)
-          GITHUB_PAGES: 'true'
-          # Base path of the site, e.g. /<repo>/ if using project pages
-          NUXT_APP_BASE_URL: "/${{ github.event.repository.name }}/"
-          # External Laravel API base (override if needed)
+          # External Laravel API base (override if needed). Defaults in nuxt.config.ts
           NUXT_PUBLIC_API_BASE: ${{ vars.NUXT_PUBLIC_API_BASE || secrets.NUXT_PUBLIC_API_BASE || '' }}
+          # Telemetry off in CI
+          NUXT_TELEMETRY_DISABLED: 1
         run: |
           npm run generate
       - name: Upload artifact
@@ -51,4 +59,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
