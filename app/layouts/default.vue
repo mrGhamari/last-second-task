@@ -13,17 +13,14 @@
           aria-controls="primaryNavbar"
           :aria-expanded="navExpanded ? 'true' : 'false'"
           aria-label="Toggle navigation"
-          @click="navExpanded = !navExpanded"
+          @click.prevent="toggleNav()"
         >
           <span class="navbar-toggler-icon" />
         </button>
-        <div class="collapse navbar-collapse" id="primaryNavbar">
+        <div class="collapse navbar-collapse" id="primaryNavbar" ref="navbarCollapseEl">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            <li class="nav-item">
-              <NuxtLink to="/" class="nav-link" active-class="active" exact-active-class="active">Home</NuxtLink>
-            </li>
-            <li class="nav-item">
-              <NuxtLink to="/rooms" class="nav-link">Rooms</NuxtLink>
+            <li v-for="item in menuItems" :key="item.to" class="nav-item">
+              <NuxtLink :to="item.to" class="nav-link" active-class="active" :exact-active-class="item.exact ? 'active' : undefined">{{ item.label }}</NuxtLink>
             </li>
           </ul>
           <div class="d-flex align-items-center gap-2">
@@ -55,16 +52,33 @@
 </template>
 
 <script setup lang="ts">
+import { MENU_ITEMS } from '~/constants/menu'
 const year = new Date().getFullYear()
 const { theme, toggleTheme, initTheme } = useTheme()
 const navExpanded = ref(false)
+const navbarCollapseEl = ref<HTMLElement | null>(null)
+const menuItems = ref(MENU_ITEMS)
+
+function toggleNav() {
+  const anyWin = window as any
+  const el = navbarCollapseEl.value
+  if (!el) return
+  if (anyWin?.bootstrap?.Collapse) {
+    const instance = anyWin.bootstrap.Collapse.getOrCreateInstance(el)
+    instance.toggle()
+  } else {
+    // Fallback: toggle class if Bootstrap JS not available
+    el.classList.toggle('show')
+    navExpanded.value = el.classList.contains('show')
+  }
+}
 
 onMounted(() => {
   initTheme()
   // Collapse navbar on route change (mobile UX)
   const route = useRoute()
   watch(() => route.fullPath, () => {
-    const el = document.getElementById('primaryNavbar')
+    const el = navbarCollapseEl.value || document.getElementById('primaryNavbar')
     // bootstrap Collapse API if available
     const anyWin = window as any
     if (el && anyWin?.bootstrap?.Collapse) {
@@ -73,6 +87,13 @@ onMounted(() => {
     }
     navExpanded.value = false
   })
+
+  // Sync expanded state with Bootstrap events if available
+  const el = navbarCollapseEl.value
+  if (el) {
+    el.addEventListener('shown.bs.collapse', () => { navExpanded.value = true })
+    el.addEventListener('hidden.bs.collapse', () => { navExpanded.value = false })
+  }
 })
 </script>
 
