@@ -38,10 +38,22 @@ jobs:
           fi
           echo "GITHUB_PAGES=true" >> $GITHUB_ENV
           echo "Resolved baseURL: $(cat $GITHUB_ENV | sed -n 's/^NUXT_APP_BASE_URL=//p')"
+          # Default API base if none supplied via repository Variables/Secrets
+          if [ -z "${{ vars.NUXT_PUBLIC_API_BASE }}" ] && [ -z "${{ secrets.NUXT_PUBLIC_API_BASE }}" ]; then
+            echo "NUXT_PUBLIC_API_BASE=https://smart-home-api.lahzeakhari.ir/api" >> $GITHUB_ENV
+            echo "Using default API base: https://smart-home-api.lahzeakhari.ir/api"
+          else
+            # Prefer repository Variable over Secret for visibility
+            if [ -n "${{ vars.NUXT_PUBLIC_API_BASE }}" ]; then
+              echo "NUXT_PUBLIC_API_BASE=${{ vars.NUXT_PUBLIC_API_BASE }}" >> $GITHUB_ENV
+              echo "Using repo var API base: ${{ vars.NUXT_PUBLIC_API_BASE }}"
+            else
+              echo "NUXT_PUBLIC_API_BASE=${{ secrets.NUXT_PUBLIC_API_BASE }}" >> $GITHUB_ENV
+              echo "Using secret API base"
+            fi
+          fi
       - name: Build (Generate static site)
         env:
-          # External Laravel API base (override if needed). Defaults in nuxt.config.ts
-          NUXT_PUBLIC_API_BASE: ${{ vars.NUXT_PUBLIC_API_BASE || secrets.NUXT_PUBLIC_API_BASE || '' }}
           # Telemetry off in CI
           NUXT_TELEMETRY_DISABLED: 1
           # Extra memory for Node build if needed
@@ -50,7 +62,7 @@ jobs:
           NITRO_PRESET: github_pages
         run: |
           echo "Base URL: $NUXT_APP_BASE_URL"
-          echo "API Base: ${NUXT_PUBLIC_API_BASE:-'(default from nuxt.config.ts)'}"
+          echo "API Base: ${NUXT_PUBLIC_API_BASE}"
           npm run generate
           echo "List generated files:" && ls -la .output/public || true
           # Ensure SPA fallback exists
