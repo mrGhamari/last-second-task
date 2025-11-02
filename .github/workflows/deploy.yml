@@ -37,14 +37,24 @@ jobs:
             echo "NUXT_APP_BASE_URL=/$REPO_NAME/" >> $GITHUB_ENV
           fi
           echo "GITHUB_PAGES=true" >> $GITHUB_ENV
+          echo "Resolved baseURL: $(cat $GITHUB_ENV | sed -n 's/^NUXT_APP_BASE_URL=//p')"
       - name: Build (Generate static site)
         env:
           # External Laravel API base (override if needed). Defaults in nuxt.config.ts
           NUXT_PUBLIC_API_BASE: ${{ vars.NUXT_PUBLIC_API_BASE || secrets.NUXT_PUBLIC_API_BASE || '' }}
           # Telemetry off in CI
           NUXT_TELEMETRY_DISABLED: 1
+          # Extra memory for Node build if needed
+          NODE_OPTIONS: --max_old_space_size=4096
+          # Force Nitro preset via env as well (in addition to nuxt.config.ts)
+          NITRO_PRESET: github_pages
         run: |
+          echo "Base URL: $NUXT_APP_BASE_URL"
+          echo "API Base: ${NUXT_PUBLIC_API_BASE:-'(default from nuxt.config.ts)'}"
           npm run generate
+          echo "List generated files:" && ls -la .output/public || true
+          # Ensure SPA fallback exists
+          if [ ! -f .output/public/404.html ]; then cp .output/public/index.html .output/public/404.html; fi
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
