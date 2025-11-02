@@ -1,0 +1,24 @@
+/* Global app styles and Bootstrap theme helpers for Nuxt 4 */
+
+/* Page/Layout transition classes configured in nuxt.config.ts */
+.fade-enter-active,
+.fade-leave-active { transition: opacity .2s ease-in-out; }
+.fade-enter-from,
+.fade-leave-to { opacity: 0; }
+
+/* Smooth theme transitions without overwhelming motion */
+html, body, .card, .list-group-item, .navbar, .bg-body, .bg-body-tertiary {
+  transition: background-color .2s ease, color .2s ease, border-color .2s ease;
+}
+
+/* Provide default background using Bootstrap variables */
+body { min-height: 100dvh; background-color: var(--bs-body-bg); color: var(--bs-body-color); }
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001s !important; transition-duration: 0.001s !important; }
+}
+
+/* Better focus visibility on keyboard nav */
+:focus-visible { outline: 2px solid var(--bs-primary); outline-offset: 2px; }
+
